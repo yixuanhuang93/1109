@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>台灣藍鵲食性探索與撈食大挑戰</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        magpie: {
+                            blue: '#1e40af',
+                            darkblue: '#172554',
+                            red: '#ef4444',
+                            black: '#18181b',
+                            feather: '#3b82f6',
+                            bg: '#f0fdf4',
+                            accent: '#f59e0b'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f4f7f6;
+            touch-action: manipulation;
+            user-select: none;
+        }
+        .card-flip {
+            perspective: 1000px;
+        }
+        .card-inner {
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        .card-flip:hover .card-inner, .card-flip.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+        .card-front, .card-back {
+            backface-visibility: hidden;
+        }
+        .card-back {
+            transform: rotateY(180deg);
+        }
+        #game-canvas {
+            cursor: none;
+            touch-action: none;
+        }
+        .ripple {
+            animation: ripple-effect 0.6s linear infinite;
+        }
+        @keyframes ripple-effect {
+            0% { transform: scale(0.8); opacity: 1; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+    </style>
+</head>
+<body class="bg-emerald-50/50 min-h-screen flex flex-col justify-between text-slate-800">
+
+    <!-- Header Navigation -->
+    <header class="bg-gradient-to-r from-blue-900 via-blue-800 to-emerald-800 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-red-500 border-2 border-white flex items-center justify-center font-bold text-xl text-white shadow">
+                    🦅
+                </div>
+                <div>
+                    <h1 class="text-xl font-black tracking-wide flex items-center gap-2">
+                        台灣藍鵲生態探險 <span class="text-xs bg-amber-400 text-slate-900 font-bold px-2 py-0.5 rounded-full">長尾山娘</span>
+                    </h1>
+                    <p class="text-xs text-blue-100">Taiwan Blue Magpie Diet & Feeding Game</p>
+                </div>
+            </div>
+
+            <!-- Tab Switchers -->
+            <nav class="flex bg-blue-950/40 p-1 rounded-xl border border-white/10">
+                <button id="nav-learn-btn" onclick="switchTab('learn')" class="px-4 py-1.5 rounded-lg text-sm font-bold transition flex items-center gap-2 bg-white text-blue-900 shadow">
+                    <i class="fa-solid fa-book-open"></i> 食性講堂
+                </button>
+                <button id="nav-game-btn" onclick="switchTab('game')" class="px-4 py-1.5 rounded-lg text-sm font-bold transition flex items-center gap-2 text-white hover:bg-white/10">
+                    <i class="fa-solid fa-gamepad"></i> 藍鵲撈食大挑戰
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-5xl mx-auto w-full p-4 flex-grow">
+
+        <!-- ================= PAGE 1: LEARNING MODULE ================= -->
+        <section id="page-learn" class="space-y-8 animate-fade-in">
+            <!-- Hero Banner -->
+            <div class="bg-gradient-to-r from-blue-700 to-indigo-800 rounded-3xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row items-center gap-6">
+                <div class="z-10 flex-1 space-y-3">
+                    <span class="inline-block bg-red-500 text-white text-xs px-3 py-1 rounded-full font-bold">特有種鳥類</span>
+                    <h2 class="text-3xl md:text-4xl font-extrabold">鴉科學名：Formosan Blue Magpie</h2>
+                    <p class="text-blue-100 leading-relaxed text-sm md:text-base">
+                        台灣藍鵲俗稱「長尾山娘」，擁有鮮紅色的嘴喙與雙腳、深藍色的羽毛以及極長的尾羽。牠們是極具智慧與獵食能力的**雜食性**鳥類，在台灣山林中扮演著相當重要的生態角色！
+                    </p>
+                    <div class="flex flex-wrap gap-4 text-xs font-semibold pt-2">
+                        <span class="bg-white/20 px-3 py-1.5 rounded-lg backdrop-blur-md">🔴 特徵：鮮紅喙腳 + 碧藍羽毛</span>
+                        <span class="bg-white/20 px-3 py-1.5 rounded-lg backdrop-blur-md">🍽️ 食性：廣泛雜食性</span>
+                        <span class="bg-white/20 px-3 py-1.5 rounded-lg backdrop-blur-md">🤝 行為：巢邊幫手育雛</span>
+                    </div>
+                </div>
+                <!-- SVG Bird Illustration -->
+                <div class="w-44 h-44 md:w-56 md:w-56 relative flex-shrink-0 flex items-center justify-center bg-white/10 rounded-2xl border border-white/20 shadow-inner">
+                    <svg viewBox="0 0 200 200" class="w-full h-full drop-shadow-md">
+                        <!-- Long Tail -->
+                        <path d="M 90 140 Q 60 180 30 195 C 40 170 70 140 85 130 Z" fill="#1d4ed8" />
+                        <path d="M 85 140 Q 50 185 20 200 C 35 175 65 140 80 125 Z" fill="#ffffff" />
+                        <path d="M 95 140 Q 70 180 40 190 C 50 170 75 140 90 130 Z" fill="#1e40af" />
+                        <!-- Body -->
+                        <ellipse cx="110" cy="110" rx="35" ry="45" fill="#2563eb" transform="rotate(-20 110 110)" />
+                        <!-- Head (Black) -->
+                        <circle cx="140" cy="75" r="28" fill="#18181b" />
+                        <path d="M 120 90 Q 135 100 150 85 Z" fill="#18181b" />
+                        <!-- Yellow Eye -->
+                        <circle cx="148" cy="70" r="6" fill="#facc15" />
+                        <circle cx="149" cy="70" r="3" fill="#000000" />
+                        <!-- Red Beak -->
+                        <path d="M 160 72 L 190 80 L 163 88 Z" fill="#ef4444" />
+                        <!-- Red Legs -->
+                        <path d="M 110 150 L 115 175 M 120 150 L 130 175" stroke="#ef4444" stroke-width="4" stroke-linecap="round" />
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Diet Interactive Cards Section -->
+            <div>
+                <div class="text-center mb-6">
+                    <h3 class="text-2xl font-extrabold text-slate-800">藍鵲的菜單大公開（點擊卡片翻面探索）</h3>
+                    <p class="text-sm text-slate-500">深入了解台灣藍鵲在野外究竟都吃些什麼？</p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                    <!-- Card 1 -->
+                    <div class="card-flip h-60 cursor-pointer" onclick="this.classList.toggle('flipped')">
+                        <div class="card-inner relative w-full h-full shadow-md rounded-2xl bg-white border border-slate-200">
+                            <!-- Front -->
+                            <div class="card-front absolute inset-0 p-5 flex flex-col items-center justify-center text-center space-y-3">
+                                <div class="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center text-3xl text-amber-600">
+                                    🦎
+                                </div>
+                                <h4 class="font-bold text-lg text-slate-800">小型爬蟲與兩棲類</h4>
+                                <p class="text-xs text-slate-500">藍鵲可是山林中的強悍捕手！</p>
+                                <span class="text-xs text-blue-600 font-semibold bg-blue-50 px-3 py-1 rounded-full">點擊查看說明 🔄</span>
+                            </div>
+                            <!-- Back -->
+                            <div class="card-back absolute inset-0 p-5 bg-gradient-to-br from-amber-500 to-orange-600 text-white rounded-2xl flex flex-col justify-center space-y-2">
+                                <h4 class="font-bold text-base border-b border-white/30 pb-1">蜥蜴、青蛙與小蛇</h4>
+                                <p class="text-xs leading-relaxed">
+                                    藍鵲雙腳與喙力道強勁，非常擅長捕捉蜥蜴（如麗紋石龍子）、樹蛙，甚至連小型毒蛇或幼蛇也難逃牠的法眼。這是牠們補充優質蛋白質的主要來源！
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 2 -->
+                    <div class="card-flip h-60 cursor-pointer" onclick="this.classList.toggle('flipped')">
+                        <div class="card-inner relative w-full h-full shadow-md rounded-2xl bg-white border border-slate-200">
+                            <!-- Front -->
+                            <div class="card-front absolute inset-0 p-5 flex flex-col items-center justify-center text-center space-y-3">
+                                <div class="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center text-3xl text-emerald-600">
+                                    🦗
+                                </div>
+                                <h4 class="font-bold text-lg text-slate-800">多樣化昆蟲節肢類</h4>
+                                <p class="text-xs text-slate-500">飛蝗、蟋蟀、野蜂都難不倒牠</p>
+                                <span class="text-xs text-blue-600 font-semibold bg-blue-50 px-3 py-1 rounded-full">點擊查看說明 🔄</span>
+                            </div>
+                            <!-- Back -->
+                            <div class="card-back absolute inset-0 p-5 bg-gradient-to-br from-emerald-600 to-teal-700 text-white rounded-2xl flex flex-col justify-center space-y-2">
+                                <h4 class="font-bold text-base border-b border-white/30 pb-1">野蜂、蝗蟲與金龜子</h4>
+                                <p class="text-xs leading-relaxed">
+                                    草叢與樹冠層中的昆蟲是藍鵲日常不可或缺的點心。牠們甚至會成群合作叼食蜂巢中的幼蟲，具有相當高的獵食技巧！
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 3 -->
+                    <div class="card-flip h-60 cursor-pointer" onclick="this.classList.toggle('flipped')">
+                        <div class="card-inner relative w-full h-full shadow-md rounded-2xl bg-white border border-slate-200">
+                            <!-- Front -->
+                            <div class="card-front absolute inset-0 p-5 flex flex-col items-center justify-center text-center space-y-3">
+                                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center text-3xl text-red-500">
+                                    🥭
+                                </div>
+                                <h4 class="font-bold text-lg text-slate-800">植物果實與野莓</h4>
+                                <p class="text-xs text-slate-500">大自然的種子傳播大使</p>
+                                <span class="text-xs text-blue-600 font-semibold bg-blue-50 px-3 py-1 rounded-full">點擊查看說明 🔄</span>
+                            </div>
+                            <!-- Back -->
+                            <div class="card-back absolute inset-0 p-5 bg-gradient-to-br from-red-500 to-rose-600 text-white rounded-2xl flex flex-col justify-center space-y-2">
+                                <h4 class="font-bold text-base border-b border-white/30 pb-1">榕果、木瓜與野柿</h4>
+                                <p class="text-xs leading-relaxed">
+                                    除了肉食，藍鵲非常喜歡成熟的多汁果實，如榕樹果實、野莓、木瓜與野柿子。吃完果實後排出的種子能幫助森林植物播種繁殖。
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 4 -->
+                    <div class="card-flip h-60 cursor-pointer" onclick="this.classList.toggle('flipped')">
+                        <div class="card-inner relative w-full h-full shadow-md rounded-2xl bg-white border border-slate-200">
+                            <!-- Front -->
+                            <div class="card-front absolute inset-0 p-5 flex flex-col items-center justify-center text-center space-y-3">
+                                <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center text-3xl text-purple-600">
+                                    📦
+                                </div>
+                                <h4 class="font-bold text-lg text-slate-800">特殊的「儲食習性」</h4>
+                                <p class="text-xs text-slate-500">吃不完的先藏起來好過冬！</p>
+                                <span class="text-xs text-blue-600 font-semibold bg-blue-50 px-3 py-1 rounded-full">點擊查看說明 🔄</span>
+                            </div>
+                            <!-- Back -->
+                            <div class="card-back absolute inset-0 p-5 bg-gradient-to-br from-purple-600 to-indigo-700 text-white rounded-2xl flex flex-col justify-center space-y-2">
+                                <h4 class="font-bold text-base border-b border-white/30 pb-1">食物貯藏（Food Caching）</h4>
+                                <p class="text-xs leading-relaxed">
+                                    當食物充足或獵物體型過大時，藍鵲會將剩餘食物叼至樹枝叉縫或樹葉叢下隱藏，並用苔蘚掩蓋，待飢餓時再回來取用。
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 5 -->
+                    <div class="card-flip h-60 cursor-pointer" onclick="this.classList.toggle('flipped')">
+                        <div class="card-inner relative w-full h-full shadow-md rounded-2xl bg-white border border-slate-200">
+                            <!-- Front -->
+                            <div class="card-front absolute inset-0 p-5 flex flex-col items-center justify-center text-center space-y-3">
+                                <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-3xl text-blue-600">
+                                    🐣
+                                </div>
+                                <h4 class="font-bold text-lg text-slate-800">巢邊幫手共同餵食</h4>
+                                <p class="text-xs text-slate-500">家族團結一心的育雛機制</p>
+                                <span class="text-xs text-blue-600 font-semibold bg-blue-50 px-3 py-1 rounded-full">點擊查看說明 🔄</span>
+                            </div>
+                            <!-- Back -->
+                            <div class="card-back absolute inset-0 p-5 bg-gradient-to-br from-blue-600 to-cyan-700 text-white rounded-2xl flex flex-col justify-center space-y-2">
+                                <h4 class="font-bold text-base border-b border-white/30 pb-1">合作繁殖（Cooperative Feeding）</h4>
+                                <p class="text-xs leading-relaxed">
+                                    台灣藍鵲具有強烈的家族凝聚力！上一代發育成熟的兄姐（稱為巢邊幫手）不會立刻離巢，而是留在隊伍中幫忙親鳥尋找食物、餵食幼鳥與護巢禦敵。
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 6 -->
+                    <div class="card-flip h-60 cursor-pointer" onclick="this.classList.toggle('flipped')">
+                        <div class="card-inner relative w-full h-full shadow-md rounded-2xl bg-white border border-slate-200">
+                            <!-- Front -->
+                            <div class="card-front absolute inset-0 p-5 flex flex-col items-center justify-center text-center space-y-3">
+                                <div class="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center text-3xl text-yellow-600">
+                                    ⚠️
+                                </div>
+                                <h4 class="font-bold text-lg text-slate-800">生態維護與保育警訊</h4>
+                                <p class="text-xs text-slate-500">請勿隨意人為餵食！</p>
+                                <span class="text-xs text-blue-600 font-semibold bg-blue-50 px-3 py-1 rounded-full">點擊查看說明 🔄</span>
+                            </div>
+                            <!-- Back -->
+                            <div class="card-back absolute inset-0 p-5 bg-gradient-to-br from-yellow-600 to-amber-700 text-white rounded-2xl flex flex-col justify-center space-y-2">
+                                <h4 class="font-bold text-base border-b border-white/30 pb-1">不餵食、不干擾</h4>
+                                <p class="text-xs leading-relaxed">
+                                    人類廚餘或麵包雖然會吸引藍鵲，但高鹽高油會損害其健康，也會改變牠們原有的野外獵食本能。維護自然棲地才是保護藍鵲的最佳方式。
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quiz Section -->
+            <div class="bg-white rounded-3xl p-6 md:p-8 shadow-lg border border-slate-200">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-xl">
+                        ❓
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-slate-800">藍鵲食性小測驗（完成測驗解鎖遊戲加分！）</h3>
+                        <p class="text-xs text-slate-500">回答 3 個簡單問題，檢視你的學習成果吧！</p>
+                    </div>
+                </div>
+
+                <div id="quiz-container" class="space-y-6">
+                    <!-- Q1 -->
+                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                        <p class="font-bold text-sm text-slate-800">1. 台灣藍鵲在食性分類上屬於哪一種？</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            <button onclick="checkQuiz(1, 'A', this)" class="quiz-q1 p-2.5 rounded-lg border bg-white hover:bg-blue-50 text-xs font-semibold text-left transition">A. 純草食性（只吃樹葉草根）</button>
+                            <button onclick="checkQuiz(1, 'B', this)" class="quiz-q1 p-2.5 rounded-lg border bg-white hover:bg-blue-50 text-xs font-semibold text-left transition">B. 雜食性（吃蜥蜴、昆蟲、野果等）</button>
+                            <button onclick="checkQuiz(1, 'C', this)" class="quiz-q1 p-2.5 rounded-lg border bg-white hover:bg-blue-50 text-xs font-semibold text-left transition">C. 純海鮮類（只捕食水中魚蝦）</button>
+                        </div>
+                    </div>
+
+                    <!-- Q2 -->
+                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                        <p class="font-bold text-sm text-slate-800">2. 當台灣藍鵲捕獲大隻獵物或吃不完時，會有什麼特別行為？</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            <button onclick="checkQuiz(2, 'A', this)" class="quiz-q2 p-2.5 rounded-lg border bg-white hover:bg-blue-50 text-xs font-semibold text-left transition">A. 將食物藏在樹枝或葉叢（儲食習性）</button>
+                            <button onclick="checkQuiz(2, 'B', this)" class="quiz-q2 p-2.5 rounded-lg border bg-white hover:bg-blue-50 text-xs font-semibold text-left transition">B. 丟入河裡洗乾淨</button>
+                            <button onclick="checkQuiz(2, 'C', this)" class="quiz-q2 p-2.5 rounded-lg border bg-white hover:bg-blue-50 text-xs font-semibold text-left transition">C. 挖地洞埋到地底兩公尺深</button>
+                        </div>
+                    </div>
+
+                    <!-- Q3 -->
+                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                        <p class="font-bold text-sm text-slate-800">3. 在藍鵲育雛期間，家族中年長的大哥大姐會扮演什麼角色？</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            <button onclick="checkQuiz(3, 'A', this)" class="quiz-q3 p-2.5 rounded-lg border bg-white hover:bg-blue-50 text-xs font-semibold text-left transition">A. 搶奪幼鳥的食物</button>
+                            <button onclick="checkQuiz(3, 'B', this)" class="quiz-q3 p-2.5 rounded-lg border bg-white hover:bg-blue-50 text-xs font-semibold text-left transition">B. 飛走建立自己的家園不理會</button>
+                            <button onclick="checkQuiz(3, 'C', this)" class="quiz-q3 p-2.5 rounded-lg border bg-white hover:bg-blue-50 text-xs font-semibold text-left transition">C. 擔任「巢邊幫手」協助餵食幼鳥</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CTA To Game -->
+            <div class="text-center pt-4 pb-8">
+                <button onclick="switchTab('game')" class="bg-gradient-to-r from-emerald-600 via-teal-600 to-blue-600 hover:from-emerald-500 hover:to-blue-500 text-white font-extrabold text-lg px-8 py-4 rounded-2xl shadow-xl hover:shadow-2xl hover:scale-105 transition transform flex items-center gap-3 mx-auto">
+                    <span>看完學習內容！立即前往「藍鵲撈食大挑戰」</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+        </section>
+
+
+        <!-- ================= PAGE 2: SCOOP GAME ================= -->
+        <section id="page-game" class="hidden space-y-4">
+            <!-- Game Header Dashboard -->
+            <div class="bg-white rounded-2xl p-4 shadow-md border border-slate-200 flex flex-wrap items-center justify-between gap-4">
+                <!-- Left stats -->
+                <div class="flex items-center gap-6">
+                    <div class="text-center">
+                        <span class="text-xs text-slate-400 font-bold block uppercase">剩餘時間</span>
+                        <span id="game-timer" class="text-2xl font-black text-slate-800">60s</span>
+                    </div>
+                    <div class="h-8 w-px bg-slate-200"></div>
+                    <div class="text-center">
+                        <span class="text-xs text-slate-400 font-bold block uppercase">目前得分</span>
+                        <span id="game-score" class="text-2xl font-black text-emerald-600">0</span>
+                    </div>
+                    <div class="h-8 w-px bg-slate-200"></div>
+                    <div class="text-center">
+                        <span class="text-xs text-slate-400 font-bold block uppercase">藍鵲飽足度</span>
+                        <span id="game-fed-count" class="text-2xl font-black text-blue-600">0/15</span>
+                    </div>
+                </div>
+
+                <!-- Center Paper Scoop Status Indicator -->
+                <div class="flex-1 max-w-xs">
+                    <div class="flex justify-between text-xs font-bold mb-1">
+                        <span class="text-slate-600 flex items-center gap-1"><i class="fa-solid fa-file"></i> 紙網張力/耐久度</span>
+                        <span id="scoop-durability-text" class="text-emerald-600">100%</span>
+                    </div>
+                    <div class="w-full bg-slate-200 rounded-full h-3 overflow-hidden p-0.5">
+                        <div id="scoop-durability-bar" class="bg-emerald-500 h-full rounded-full transition-all duration-150" style="width: 100%;"></div>
+                    </div>
+                </div>
+
+                <!-- Right Control Actions -->
+                <div class="flex items-center gap-2">
+                    <button id="btn-start-game" onclick="startGame()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2 rounded-xl text-sm shadow transition flex items-center gap-1">
+                        <i class="fa-solid fa-play"></i> 開始撈食
+                    </button>
+                    <button onclick="switchTab('learn')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-2 rounded-xl text-sm transition">
+                        <i class="fa-solid fa-book"></i> 圖鑑
+                    </button>
+                </div>
+            </div>
+
+            <!-- Game Mechanics Info Banner -->
+            <div class="bg-emerald-900/90 text-emerald-100 rounded-xl p-3 text-xs flex flex-wrap justify-between items-center gap-2 shadow">
+                <div class="flex items-center gap-2">
+                    <span class="bg-amber-400 text-slate-900 font-extrabold px-2 py-0.5 rounded">撈金魚機制說明</span>
+                    <span>移動滑鼠/觸控操控**紙網**，在水中對準食物向上**撈起**！入水過久或承重過重會破網！</span>
+                </div>
+                <div class="flex gap-3 font-semibold">
+                    <span>🦎 蜥蜴(重)</span>
+                    <span>🥭 木瓜(中)</span>
+                    <span>🦗 昆蟲(輕)</span>
+                    <span>⚠️ 垃圾(破網)</span>
+                </div>
+            </div>
+
+            <!-- Canvas Container -->
+            <div class="relative w-full rounded-3xl overflow-hidden shadow-2xl border-4 border-emerald-800 bg-slate-900 aspect-[16/9] max-h-[550px]">
+                <canvas id="game-canvas" class="w-full h-full block"></canvas>
+
+                <!-- Start / Pause Game Overlay Screen -->
+                <div id="game-overlay" class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm flex flex-col items-center justify-center text-white p-6 z-20 text-center">
+                    <div class="w-20 h-20 rounded-full bg-blue-600 border-4 border-white flex items-center justify-center text-4xl mb-3 shadow-lg">
+                        🦅
+                    </div>
+                    <h2 class="text-3xl font-black mb-2">藍鵲溪流撈食大挑戰</h2>
+                    <p class="text-sm text-slate-300 max-w-md mb-6">
+                        運用「撈金魚」的細微技巧！在溪流中將台灣藍鵲喜歡的果實、蜥蜴與昆蟲撈進岸邊的餵食碗中。小心別碰到水中的塑膠垃圾，也注意別讓紙網泡水過久破裂！
+                    </p>
+                    <button onclick="startGame()" class="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-black text-lg px-8 py-3.5 rounded-full shadow-xl hover:scale-105 transition transform">
+                        <i class="fa-solid fa-hand-pointer mr-2"></i> 拿起紙網，開始撈食！
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Game End Result Modal -->
+    <div id="result-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 text-center shadow-2xl border border-slate-100 transform transition-all scale-100">
+            <div id="result-badge" class="w-20 h-20 rounded-full bg-amber-100 text-amber-500 mx-auto flex items-center justify-center text-4xl mb-3 border-4 border-amber-300">
+                🏆
+            </div>
+            <h3 id="result-title" class="text-2xl font-black text-slate-800 mb-1">撈食大成功！</h3>
+            <p id="result-subtitle" class="text-xs text-slate-500 mb-4">你成功餵飽了台灣藍鵲家族！</p>
+
+            <div class="bg-slate-50 rounded-2xl p-4 space-y-3 border border-slate-200 mb-6 text-left">
+                <div class="flex justify-between items-center text-sm font-bold">
+                    <span class="text-slate-500">最終獲得分數:</span>
+                    <span id="res-score" class="text-xl text-emerald-600 font-black">0</span>
+                </div>
+                <div class="flex justify-between items-center text-sm font-bold">
+                    <span class="text-slate-500">成功撈取食材:</span>
+                    <span id="res-count" class="text-slate-800">0 個</span>
+                </div>
+                <div class="flex justify-between items-center text-sm font-bold">
+                    <span class="text-slate-500">紙網剩餘狀況:</span>
+                    <span id="res-net" class="text-blue-600">良好</span>
+                </div>
+            </div>
+
+            <!-- Quiz Bonus Note -->
+            <p id="quiz-bonus-msg" class="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg p-2 mb-4 hidden font-semibold">
+                🎓 包含知識小測驗答對的 bonus 額外加分！
+            </p>
+
+            <div class="flex gap-3">
+                <button onclick="startGame()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl transition">
+                    <i class="fa-solid fa-rotate-right mr-1"></i> 再玩一次
+                </button>
+                <button onclick="switchTab('learn')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-xl transition">
+                    <i class="fa-solid fa-book-open mr-1"></i> 回食性講堂
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500">
+        <p>台灣藍鵲生態與食性學習互動網 &copy; 2026 保育與科普推廣</p>
+    </footer>
+
+    <!-- JavaScript Game Logic -->
+    <script>
+        // ================= Global States & Navigation =================
+        let currentTab = 'learn';
+        let quizScoreBonus = 0;
+        let quizAnswers = { 1: false, 2: false, 3: false };
+
+        function switchTab(tab) {
+            currentTab = tab;
+            const pageLearn = document.getElementById('page-learn');
+            const pageGame = document.getElementById('page-game');
+            const navLearn = document.getElementById('nav-learn-btn');
+            const navGame = document.getElementById('nav-game-btn');
+
+            if (tab === 'learn') {
+                pageLearn.classList.remove('hidden');
+                pageGame.classList.add('hidden');
+                navLearn.className = "px-4 py-1.5 rounded-lg text-sm font-bold transition flex items-center gap-2 bg-white text-blue-900 shadow";
+                navGame.className = "px-4 py-1.5 rounded-lg text-sm font-bold transition flex items-center gap-2 text-white hover:bg-white/10";
+                if(gameRunning) pauseGame();
+            } else {
+                pageLearn.classList.add('hidden');
+                pageGame.classList.remove('hidden');
+                navGame.className = "px-4 py-1.5 rounded-lg text-sm font-bold transition flex items-center gap-2 bg-white text-blue-900 shadow";
+                navLearn.className = "px-4 py-1.5 rounded-lg text-sm font-bold transition flex items-center gap-2 text-white hover:bg-white/10";
+                resizeCanvas();
+            }
+        }
+
+        // Quiz Logic
+        function checkQuiz(qNum, choice, btnElem) {
+            const correctAnswers = { 1: 'B', 2: 'A', 3: 'C' };
+            const buttons = document.querySelectorAll(`.quiz-q${qNum}`);
+            
+            buttons.forEach(btn => {
+                btn.classList.remove('bg-emerald-500', 'bg-red-500', 'text-white', 'border-emerald-600', 'border-red-600');
+                btn.disabled = true;
+            });
+
+            if (choice === correctAnswers[qNum]) {
+                btnElem.classList.add('bg-emerald-500', 'text-white', 'border-emerald-600');
+                quizAnswers[qNum] = true;
+            } else {
+                btnElem.classList.add('bg-red-500', 'text-white', 'border-red-600');
+                // Highlight correct
+                buttons.forEach(btn => {
+                    if (btn.innerText.startsWith(correctAnswers[qNum])) {
+                        btn.classList.add('bg-emerald-100', 'text-emerald-800', 'border-emerald-400');
+                    }
+                });
+            }
+
+            // Calculate quiz bonus
+            const correctCount = Object.values(quizAnswers).filter(Boolean).length;
+            quizScoreBonus = correctCount * 50;
+        }
+
+        // ================= Game Logic (Scoop the Food Mechanics) =================
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+
+        let gameRunning = false;
+        let gameTime = 60;
+        let timerInterval = null;
+        let score = 0;
+        let fedCount = 0;
+
+        // Scoop Paper Net Properties
+        const scoop = {
+            x: 0,
+            y: 0,
+            radius: 35,
+            durability: 100, // 0 to 100%
+            isSubmerged: false,
+            carryingItem: null,
+            angle: 0
+        };
+
+        // Magpie Target Feeding Bowl
+        const bowl = {
+            x: 0,
+            y: 0,
+            radius: 50
+        };
+
+        // Items floating in the stream
+        let foodItems = [];
+        let particles = [];
+
+        // Item Config Types
+        const ITEM_TYPES = [
+            { type: 'lizard', name: '蜥蜴', icon: '🦎', weight: 2.2, points: 60, speed: 1.8, size: 22, color: '#10b981' },
+            { type: 'papaya', name: '木瓜/果實', icon: '🥭', weight: 1.4, points: 40, speed: 1.0, size: 20, color: '#f59e0b' },
+            { type: 'insect', name: '蝗蟲/昆蟲', icon: '🦗', weight: 0.8, points: 30, speed: 2.2, size: 16, color: '#84cc16' },
+            { type: 'golden', name: '金黃野果', icon: '🌟', weight: 1.0, points: 100, speed: 1.4, size: 18, color: '#eab308' },
+            { type: 'trash', name: '塑膠垃圾', icon: '🥤', weight: 5.0, points: -30, speed: 0.8, size: 22, color: '#ef4444' }
+        ];
+
+        function resizeCanvas() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+            // Place bowl at top right corner
+            bowl.x = canvas.width - 70;
+            bowl.y = 70;
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        // Track Pointer
+        function updatePointerPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+            if (clientX !== undefined && clientY !== undefined) {
+                scoop.x = clientX - rect.left;
+                scoop.y = clientY - rect.top;
+            }
+        }
+
+        canvas.addEventListener('mousemove', updatePointerPos);
+        canvas.addEventListener('touchmove', (e) => {
+            updatePointerPos(e);
+            e.preventDefault();
+        }, { passive: false });
+
+        function startGame() {
+            document.getElementById('result-modal').classList.add('hidden');
+            document.getElementById('game-overlay').classList.add('hidden');
+
+            resizeCanvas();
+
+            // Reset Game Variables
+            score = 0;
+            fedCount = 0;
+            gameTime = 60;
+            scoop.durability = 100;
+            scoop.carryingItem = null;
+            foodItems = [];
+            particles = [];
+
+            updateUI();
+
+            gameRunning = true;
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                if (gameRunning) {
+                    gameTime--;
+                    document.getElementById('game-timer').innerText = gameTime + 's';
+                    if (gameTime <= 0) {
+                        endGame(true);
+                    }
+                }
+            }, 1000);
+
+            // Initial Spawning
+            for (let i = 0; i < 7; i++) {
+                spawnFoodItem();
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        function pauseGame() {
+            gameRunning = false;
+            clearInterval(timerInterval);
+        }
+
+        function spawnFoodItem() {
+            // Pick type by probability
+            const rand = Math.random();
+            let config;
+            if (rand < 0.25) config = ITEM_TYPES[1]; // Papaya
+            else if (rand < 0.50) config = ITEM_TYPES[2]; // Insect
+            else if (rand < 0.75) config = ITEM_TYPES[0]; // Lizard
+            else if (rand < 0.88) config = ITEM_TYPES[3]; // Golden
+            else config = ITEM_TYPES[4]; // Trash
+
+            foodItems.push({
+                ...config,
+                x: -30,
+                y: Math.random() * (canvas.height - 140) + 80,
+                vx: config.speed * (0.8 + Math.random() * 0.5),
+                vy: Math.sin(Math.random() * Math.PI * 2) * 0.5,
+                wobble: Math.random() * Math.PI * 2
+            });
+        }
+
+        function createSplash(x, y, color = '#ffffff') {
+            for (let i = 0; i < 8; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 4,
+                    vy: (Math.random() - 0.5) * 4 - 1,
+                    radius: Math.random() * 3 + 2,
+                    alpha: 1,
+                    color: color
+                });
+            }
+        }
+
+        function endGame(timeUp = false) {
+            gameRunning = false;
+            clearInterval(timerInterval);
+
+            // Final score with quiz bonus
+            const finalScore = Math.max(0, score + quizScoreBonus);
+
+            document.getElementById('result-modal').classList.remove('hidden');
+            document.getElementById('res-score').innerText = finalScore;
+            document.getElementById('res-count').innerText = `${fedCount} 個食材`;
+            document.getElementById('res-net').innerText = `${Math.round(scoop.durability)}% 耐久`;
+
+            const badge = document.getElementById('result-badge');
+            const title = document.getElementById('result-title');
+            const bonusMsg = document.getElementById('quiz-bonus-msg');
+
+            if (quizScoreBonus > 0) {
+                bonusMsg.classList.remove('hidden');
+            } else {
+                bonusMsg.classList.add('hidden');
+            }
+
+            if (scoop.durability <= 0) {
+                badge.innerText = '🕸️';
+                badge.className = "w-20 h-20 rounded-full bg-red-100 text-red-500 mx-auto flex items-center justify-center text-4xl mb-3 border-4 border-red-300";
+                title.innerText = '紙網破裂了！';
+            } else if (fedCount >= 15) {
+                badge.innerText = '👑';
+                badge.className = "w-20 h-20 rounded-full bg-amber-100 text-amber-500 mx-auto flex items-center justify-center text-4xl mb-3 border-4 border-amber-300";
+                title.innerText = '藍鵲特級大廚！';
+                if (typeof confetti === 'function') confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+            } else {
+                badge.innerText = '👏';
+                badge.className = "w-20 h-20 rounded-full bg-blue-100 text-blue-500 mx-auto flex items-center justify-center text-4xl mb-3 border-4 border-blue-300";
+                title.innerText = '挑戰完成！';
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('game-score').innerText = score;
+            document.getElementById('game-fed-count').innerText = `${fedCount}/15`;
+
+            const durabilityBar = document.getElementById('scoop-durability-bar');
+            const durabilityText = document.getElementById('scoop-durability-text');
+            const durPercent = Math.max(0, Math.round(scoop.durability));
+
+            durabilityText.innerText = `${durPercent}%`;
+            durabilityBar.style.width = `${durPercent}%`;
+
+            if (durPercent > 50) {
+                durabilityBar.className = "bg-emerald-500 h-full rounded-full transition-all duration-150";
+            } else if (durPercent > 20) {
+                durabilityBar.className = "bg-amber-500 h-full rounded-full transition-all duration-150";
+            } else {
+                durabilityBar.className = "bg-red-500 h-full rounded-full transition-all duration-150";
+            }
+        }
+
+        // Main Rendering & Physics Loop
+        function gameLoop() {
+            if (!gameRunning) return;
+
+            // Clear Background (Forest Stream Environment)
+            ctx.fillStyle = '#0f384c';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw River Water Waves Effect
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+            ctx.lineWidth = 2;
+            const time = Date.now() * 0.002;
+            for (let y = 30; y < canvas.height; y += 40) {
+                ctx.beginPath();
+                for (let x = 0; x < canvas.width; x += 20) {
+                    const waveY = y + Math.sin(x * 0.02 + time) * 5;
+                    if (x === 0) ctx.moveTo(x, waveY);
+                    else ctx.lineTo(x, waveY);
+                }
+                ctx.stroke();
+            }
+
+            // Check Scoop Water Depth (Is it submerged in middle stream zone?)
+            // Middle zone is stream, top right is feeding bowl
+            const distToBowl = Math.hypot(scoop.x - bowl.x, scoop.y - bowl.y);
+            scoop.isSubmerged = distToBowl > bowl.radius + 20;
+
+            // Paper Scoop Wear and Tear Mechanic (Water soaking & weight load)
+            if (scoop.isSubmerged) {
+                // Base water soak degradation
+                scoop.durability -= 0.06;
+                // Extra load if holding item
+                if (scoop.carryingItem) {
+                    scoop.durability -= 0.18 * scoop.carryingItem.weight;
+                }
+            }
+
+            if (scoop.durability <= 0) {
+                scoop.durability = 0;
+                updateUI();
+                endGame(false);
+                return;
+            }
+
+            // Spawn management
+            if (foodItems.length < 7 && Math.random() < 0.03) {
+                spawnFoodItem();
+            }
+
+            // 1. Render Feeding Bowl & Magpie Nest
+            ctx.save();
+            // Bowl background
+            ctx.fillStyle = '#fef3c7';
+            ctx.beginPath();
+            ctx.arc(bowl.x, bowl.y, bowl.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.lineWidth = 6;
+            ctx.strokeStyle = '#d97706';
+            ctx.stroke();
+
+            // Bowl Label
+            ctx.fillStyle = '#92400e';
+            ctx.font = 'bold 12px Noto Sans TC';
+            ctx.textAlign = 'center';
+            ctx.fillText('藍鵲餵食碗', bowl.x, bowl.y + bowl.radius + 18);
+
+            // Magpie Icon sitting next to bowl
+            ctx.font = '36px sans-serif';
+            ctx.fillText('🦅', bowl.x - 5, bowl.y + 12);
+            ctx.restore();
+
+            // 2. Update and Render Floating Food Items
+            for (let i = foodItems.length - 1; i >= 0; i--) {
+                const item = foodItems[i];
+
+                // If carried by scoop
+                if (scoop.carryingItem === item) {
+                    item.x = scoop.x;
+                    item.y = scoop.y;
+                } else {
+                    // River Flow movement
+                    item.wobble += 0.05;
+                    item.x += item.vx;
+                    item.y += item.vy + Math.sin(item.wobble) * 0.4;
+
+                    // Remove if out of screen
+                    if (item.x > canvas.width + 40) {
+                        foodItems.splice(i, 1);
+                        continue;
+                    }
+
+                    // Collision detection with Paper Scoop (Scooping action)
+                    if (scoop.isSubmerged && !scoop.carryingItem && scoop.durability > 0) {
+                        const dist = Math.hypot(scoop.x - item.x, scoop.y - item.y);
+                        if (dist < scoop.radius - 5) {
+                            if (item.type === 'trash') {
+                                // Plastic trash breaks paper net instantly!
+                                scoop.durability -= 45;
+                                createSplash(item.x, item.y, '#ef4444');
+                                foodItems.splice(i, 1);
+                                updateUI();
+                                continue;
+                            } else {
+                                // Pick up food!
+                                scoop.carryingItem = item;
+                                createSplash(item.x, item.y, item.color);
+                            }
+                        }
+                    }
+                }
+
+                // Render Item
+                ctx.save();
+                ctx.font = `${item.size * 1.5}px sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(item.icon, item.x, item.y);
+                ctx.restore();
+            }
+
+            // 3. Deposit Item into Magpie Bowl Logic
+            if (scoop.carryingItem && distToBowl < bowl.radius) {
+                const item = scoop.carryingItem;
+                score += item.points;
+                fedCount++;
+                createSplash(bowl.x, bowl.y, '#f59e0b');
+
+                // Remove item
+                const index = foodItems.indexOf(item);
+                if (index > -1) foodItems.splice(index, 1);
+                scoop.carryingItem = null;
+
+                // Slightly repair/reward paper net for successful feeding
+                scoop.durability = Math.min(100, scoop.durability + 5);
+
+                updateUI();
+            }
+
+            // 4. Render Particles
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.alpha -= 0.03;
+                if (p.alpha <= 0) {
+                    particles.splice(i, 1);
+                    continue;
+                }
+                ctx.save();
+                ctx.globalAlpha = p.alpha;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            // 5. Render Paper Scoop (撈金魚紙網)
+            ctx.save();
+            ctx.translate(scoop.x, scoop.y);
+
+            // Scoop Handle (Wood stick)
+            ctx.strokeStyle = '#b45309';
+            ctx.lineWidth = 6;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(0, scoop.radius);
+            ctx.lineTo(25, scoop.radius + 35);
+            ctx.stroke();
+
+            // Scoop Outer Rim (Plastic/Bamboo ring)
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = scoop.durability < 30 ? '#ef4444' : '#f59e0b';
+            ctx.beginPath();
+            ctx.arc(0, 0, scoop.radius, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Paper Net Mesh Surface
+            const durAlpha = Math.max(0.15, scoop.durability / 100 * 0.45);
+            ctx.fillStyle = `rgba(255, 255, 255, ${durAlpha})`;
+            ctx.beginPath();
+            ctx.arc(0, 0, scoop.radius - 2, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Paper Tear Lines Warning (if durability low)
+            if (scoop.durability < 50) {
+                ctx.strokeStyle = 'rgba(239, 68, 68, 0.6)';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(-10, -10); ctx.lineTo(10, 10);
+                if (scoop.durability < 25) {
+                    ctx.moveTo(10, -15); ctx.lineTo(-10, 15);
+                }
+                ctx.stroke();
+            }
+
+            ctx.restore();
+
+            // Update UI Bars continuously
+            updateUI();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Window Load Init
+        window.onload = function() {
+            resizeCanvas();
+        };
+    </script>
+</body>
+</html>
